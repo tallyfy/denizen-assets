@@ -25,6 +25,7 @@ jobs:
       shell: bash
     - name: Commit and push assets
       run: |
+        git config --global http.postBuffer 157286400
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git commit -m "Push variants" -a
