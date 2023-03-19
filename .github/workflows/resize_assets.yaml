@@ -6,6 +6,7 @@ on:
     paths:
       - assets/**
       - .github/workflows/resize_assets.yaml
+      - resize_assets.py
 
 jobs:
   resize-assets:
