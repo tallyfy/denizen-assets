@@ -489,23 +489,6 @@ curl -I https://denizen.tallyfy.com/assets-medium/US-NYC-1.jpg
 - No responsive image serving (srcset)
 - Limited compression optimization
 
-**Recommended Improvements**:
-```python
-# Modern image format support
-def generate_webp_variants(jpeg_path, webp_path):
-    with Image.open(jpeg_path) as img:
-        img.save(webp_path, 'WebP', quality=85, method=6)
-
-# Progressive JPEG encoding
-def save_progressive_jpeg(img, path):
-    img.save(path, 'JPEG', quality=90, optimize=True, progressive=True)
-
-# Responsive image generation
-sizes = [(320, 240), (640, 480), (1024, 768), (1920, 1280)]
-for width, height in sizes:
-    generate_responsive_variant(img, f\"{base_name}_{width}w.jpg\", (width, height))
-```
-
 #### Repository Size Management
 
 **Current State**:
@@ -513,16 +496,6 @@ for width, height in sizes:
 - Git LFS not implemented
 - Large binary files in main repository
 
-**Optimization Strategies**:
-```bash
-# Consider Git LFS for large assets
-git lfs track \"*.jpg\"
-git lfs track \"*.png\"
-
-# Implement aggressive compression for archival
-# Use cloud storage for cold assets
-# Implement lazy loading for development environments
-```
 
 ### Security & Legal Compliance
 
@@ -541,17 +514,6 @@ Photo by [Photographer Name](photographer_url) on [Unsplash](https://unsplash.co
 
 #### Content Validation
 
-**Required Checks**:
-```python
-def validate_image_content(image_path, expected_location):
-    \"\"\"
-    Validate image content matches expected geographical location
-    \"\"\"
-    # Implement geo-tagging verification
-    # Check for inappropriate content
-    # Verify image quality standards
-    # Validate licensing compliance
-```
 
 ### Monitoring & Analytics
 
@@ -564,24 +526,6 @@ def validate_image_content(image_path, expected_location):
 - Missing image detection frequency
 - Integration test success rates
 
-**Monitoring Implementation**:
-```bash
-# Daily health check script
-#!/bin/bash
-echo \"$(date): Running repository health check\"
-
-# Count images in each directory
-echo \"Source images: $(ls assets/*.jpg | wc -l)\"
-echo \"Small variants: $(ls assets-small/*.jpg | wc -l)\"
-echo \"Medium variants: $(ls assets-medium/*.jpg | wc -l)\"
-echo \"Large variants: $(ls assets-large/*.jpg | wc -l)\"
-
-# Check for naming convention violations
-echo \"Naming violations: $(ls assets/ | grep -v '^[A-Z][A-Z]-[A-Z0-9]*-[1-5]\\.jpg$' | wc -l)\"
-
-# Verify git status
-echo \"Unstaged files: $(git status --porcelain | wc -l)\"
-```
 
 ### Troubleshooting Guide
 
@@ -681,3 +625,12 @@ class DenizenAssetsTestSuite(unittest.TestCase):
                 self.assertGreater(img.height, 0)
                 self.assertEqual(img.format, 'JPEG')
 ```
+
+## General Coding Practices
+
+When modifying or extending this repository:
+
+- **Reuse existing code**: Don't create new functions or scripts if you can extend or augment existing ones. The `resize_assets.py` script should be enhanced rather than replaced.
+- **Consider shared libraries**: When adding functionality that could be used across multiple Tallyfy repositories, design it as a reusable component.
+- **Document your code**: Add clear comments explaining why functions exist and what they do, especially for image processing logic that may not be immediately obvious.
+- **Update documentation**: Always update CLAUDE.md and cursor rules files after any code changes to keep AI assistance current with the codebase state.
