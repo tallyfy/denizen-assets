@@ -637,3 +637,7 @@ When modifying or extending this repository:
 - **Consider shared libraries**: When adding functionality that could be used across multiple Tallyfy repositories, design it as a reusable component.
 - **Document your code**: Add clear comments explaining why functions exist and what they do, especially for image processing logic that may not be immediately obvious.
 - **Update documentation**: Always update CLAUDE.md and cursor rules files after any code changes to keep AI assistance current with the codebase state.
+## 🔗 AI reference doc (consolidated from Cursor rules, 2026-06-04)
+
+This CLAUDE.md is the single source of truth. Reference (path relative to repo root):
+- reference/development-standards.md — image validations, error-handling templates, testing, branch/quality workflow
