@@ -8,25 +8,76 @@ on:
       - .github/workflows/resize_assets.yaml
       - resize_assets.py
 
+permissions:
+  contents: write
+
 jobs:
   resize-assets:
    runs-on: ubuntu-latest
    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v7
+    # A run makes copies only for the images this push added or changed, so
+    # copies already committed are never encoded again. A push that changes
+    # no image (such as one that only edits this file) ends here, green.
+    - name: List the images this push added or changed
+      id: changed
+      env:
+        BEFORE: ${{ github.event.before }}
+        AFTER: ${{ github.sha }}
+        FORCED: ${{ github.event.forced }}
+      run: |
+        list="$RUNNER_TEMP/changed-images.txt"
+        raw="$RUNNER_TEMP/changed-paths.bin"
+        # A push that created main (before is all zeros) or rewrote its
+        # history has no earlier tip to compare with safely. Resize nothing
+        # and fail, so a person looks, rather than redo every image.
+        if [ -z "${BEFORE//0/}" ] || [ "$FORCED" = "true" ]; then
+          echo "::error::This push created main or rewrote its history (before $BEFORE, forced $FORCED), so the images it changed cannot be told apart from the ones already there. Nothing was resized. Run resize_assets.py --files-from by hand for the images it added or changed."
+          exit 1
+        fi
+        git fetch --no-tags --depth=1 origin "$BEFORE"
+        echo "Comparing $BEFORE with $AFTER"
+        git diff --no-renames --diff-filter=AM --name-only -z "$BEFORE" "$AFTER" -- assets > "$raw"
+        : > "$list"
+        while IFS= read -r -d '' p; do
+          case "$p" in
+            assets/*/*) ;;
+            *.md) ;;
+            assets/?*) printf '%s\n' "$p" >> "$list" ;;
+          esac
+        done < "$raw"
+        count=$(wc -l < "$list" | tr -d ' ')
+        echo "count=$count" >> "$GITHUB_OUTPUT"
+        echo "$count image(s) to resize:"
+        cat "$list"
+      shell: bash
+    - uses: actions/setup-python@v7
+      if: steps.changed.outputs.count != '0'
       with:
-        python-version: '3.10' 
+        python-version: '3.10'
     - name: Install Dependencies
+      if: steps.changed.outputs.count != '0'
       run: python -m pip install --upgrade pillow
       shell: bash
     - name: Image Resizer Action Script
+      if: steps.changed.outputs.count != '0'
       run: |
-        python resize_assets.py
+        python resize_assets.py --files-from "$RUNNER_TEMP/changed-images.txt"
       shell: bash
     - name: Commit and push assets
+      if: steps.changed.outputs.count != '0'
       run: |
+        git status --short
+        if git diff --cached --quiet; then
+          echo "The copies match what is already committed, so there is nothing to commit."
+          exit 0
+        fi
         git config --global http.postBuffer 157286400
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git commit -m "Push variants" -a
-        git push
+        git commit -m "Push variants"
+        if ! git push; then
+          echo "::error::Could not push the new copies, most likely because main moved during this run. Run resize_assets.py --files-from by hand with the images the list step printed."
+          exit 1
+        fi
+      shell: bash

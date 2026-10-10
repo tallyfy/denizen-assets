@@ -45,6 +45,17 @@ This command processes all images in the `assets/` directory and creates three s
 
 **Critical Implementation Note**: The large variant currently uses `resize()` instead of `thumbnail()`, which can distort images. Consider updating to preserve aspect ratio for all variants.
 
+#### Resizing only some images
+```bash
+printf 'assets/US-NYC-1.jpg\n' > /tmp/new-images.txt
+python resize_assets.py --files-from /tmp/new-images.txt
+```
+
+With `--files-from`, the script resizes only the images listed in the file, one `assets/<name>` path per line, and stages only their copies. An empty list resizes nothing. If any line is not a file directly in `assets/` that the script resizes, it refuses the whole list and changes nothing. Prefer this to the all-images command: a newer Pillow encodes the same picture to slightly different bytes, so redoing every image rewrites copies nobody changed (89 of them with Pillow 12.3.0, measured on 2026-10-09).
+
+#### The Resize assets workflow
+`.github/workflows/resize_assets.yaml` runs on every push to `main` that touches `assets/`, `resize_assets.py` or the workflow. It lists the images that push added or changed, by comparing the commit before the push with the one after, resizes only those with `--files-from`, and commits their copies as "Push variants". A push that changes no image ends green with no commit. A push that creates `main` or force-pushes it resizes nothing and fails on purpose, so resize its images by hand with `--files-from`.
+
 #### Automation Scripts
 ```bash
 # Generate task queue for batch operations
@@ -165,7 +176,7 @@ im.thumbnail((2400, 1600))  # Preserves aspect ratio
 #### Adding New Images
 1. **Placement**: Add source images to `assets/` directory only
 2. **Naming**: Follow strict `[COUNTRY_CODE]-[CITY_CODE]-[NUMBER].jpg` pattern
-3. **Processing**: Run `python resize_assets.py` to generate all variants
+3. **Processing**: Push to `main` and let the Resize assets workflow make the variants, or run `python resize_assets.py --files-from <a file listing the new images>`
 4. **Verification**: Check that all three size directories contain the new images
 5. **Git**: Variants are automatically staged by the script
 
@@ -357,8 +368,8 @@ trap 'echo "Automation interrupted. Check task_queue/ for remaining tasks."' EXI
 
 3. **Processing Pipeline**
    ```bash
-   # Run resize script
-   python resize_assets.py
+   # Run resize script on the new images only (one assets/<name> path per line)
+   python resize_assets.py --files-from new-images.txt
    
    # Verify all variants created
    ls assets-small/ assets-medium/ assets-large/

@@ -108,10 +108,11 @@ pip install Pillow
 ### Adding New Images
 
 1. **Add source images** to the `assets/` directory following the naming convention
-2. **Run the resize script** to generate all variants:
+2. **Run the resize script** on your new images only, listing one `assets/<name>` path per line in a file:
    ```bash
-   python resize_assets.py
+   python resize_assets.py --files-from new-images.txt
    ```
+   Without `--files-from` it redoes every image, which can rewrite existing copies. A push to `main` also makes the copies for any image it adds.
 3. **Verify** all variants were created successfully
 4. **Commit** your changes
 
@@ -247,7 +248,7 @@ We welcome contributions! Here's how you can help:
 1. **Find high-quality images** on Unsplash representing the location
 2. **Download and rename** following our naming convention
 3. **Add to the `assets/` directory**
-4. **Run `python resize_assets.py`** to generate variants
+4. **Run `python resize_assets.py --files-from new-images.txt`** to generate variants for the images you added
 5. **Submit a pull request** with clear description
 
 ### Improving Processing
