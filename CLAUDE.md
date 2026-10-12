@@ -41,9 +41,9 @@ python resize_assets.py
 This command processes all images in the `assets/` directory and creates three size variants:
 - **Small**: 640x480 (using `PIL.thumbnail()` - preserves aspect ratio)
 - **Medium**: 1920x1280 (using `PIL.thumbnail()` - preserves aspect ratio)
-- **Large**: 2400x1600 (using `PIL.resize()` - **WARNING: may distort aspect ratio**)
+- **Large**: full size, not 2400x1600. The script calls `im.resize((2400, 1600))` but throws away the new image that call returns, so each large file is its source image saved again as a JPEG at the source's own width and height. Nothing is resized, cropped or distorted.
 
-**Critical Implementation Note**: The large variant currently uses `resize()` instead of `thumbnail()`, which can distort images. Consider updating to preserve aspect ratio for all variants.
+**The large variant stays full size on purpose**: the owner decided on 2026-10-12 to keep the 398 large files at full size and leave the script as it is (tallyfy/work-queue#3856). Switching to `im.thumbnail((2400, 1600))` would rewrite every large file in this public repo and change what the Denizen service serves as `asset_large`, so do not make that change without a new decision. Measured on 2026-10-12 at `fc27bc9`: all 42 sampled large files have exactly their source's width and height, none is 2400x1600, and none of the 398 large files is byte-identical to its source, because the save re-encodes it.
 
 #### Resizing only some images
 ```bash
@@ -89,7 +89,7 @@ denizen-assets/
 ├── assets/              # Source images (original Unsplash resolution)
 ├── assets-small/        # 640x480 variants (thumbnails, aspect ratio preserved)
 ├── assets-medium/       # 1920x1280 variants (thumbnails, aspect ratio preserved)
-├── assets-large/        # 2400x1600 variants (resized, may distort)
+├── assets-large/        # full-size JPEG re-saves of the sources (not resized)
 ├── resize_assets.py     # Main image processing script
 ├── generate_image_tasks.sh  # Task queue generator for automation
 ├── process_task_queue.sh    # Claude automation processor
@@ -124,7 +124,7 @@ Custom abbreviations based on major cities:
 
 #### Image Processing Pipeline
 
-**Current Implementation** (`resize_assets.py:11-24`):
+**Current Implementation** (the loop at the end of `resize_assets.py`):
 ```python
 # Small variant - CORRECT: preserves aspect ratio
 im.thumbnail((640, 480))  # PIL thumbnail method
@@ -132,15 +132,12 @@ im.thumbnail((640, 480))  # PIL thumbnail method
 # Medium variant - CORRECT: preserves aspect ratio  
 im.thumbnail((1920, 1280))  # PIL thumbnail method
 
-# Large variant - PROBLEMATIC: may distort aspect ratio
-im.resize((2400, 1600))  # PIL resize method - forces exact dimensions
+# Large variant - full size: resize() returns a new image, which the script
+# discards, so the source is saved again at its own width and height
+im.resize((2400, 1600))
 ```
 
-**Recommended Improvement**:
-Replace `resize()` with `thumbnail()` for large variant to preserve aspect ratio:
-```python
-im.thumbnail((2400, 1600))  # Preserves aspect ratio
-```
+The large variant stays full size by the owner's decision of 2026-10-12 (tallyfy/work-queue#3856), described under "Primary Resize Command" above. Do not switch it to `thumbnail()` without a new decision.
 
 #### Git Integration
 - **Automated Staging**: Script automatically runs `git add .` in each size directory
@@ -403,11 +400,10 @@ python validate_batch_results.py
 
 #### Improving resize_assets.py
 ```python
-# Current problematic code (line 22-24)
-im.resize((2400, 1600))  # Forces exact dimensions
-
-# Recommended improvement
-im.thumbnail((2400, 1600))  # Preserves aspect ratio
+# The large variant: resize() returns a new image that the script discards,
+# so each large file keeps its source's full size. The owner chose on
+# 2026-10-12 to keep it that way (tallyfy/work-queue#3856), so leave this line.
+im.resize((2400, 1600))
 
 # Additional enhancements needed:
 # - Add progress bars with tqdm
