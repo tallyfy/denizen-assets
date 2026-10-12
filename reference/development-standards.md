@@ -58,7 +58,7 @@ large_count=$(ls assets-large/*.jpg | wc -l)
 
 ### 4. Aspect Ratio Verification
 
-The large variant historically used `PIL.resize()` (forces exact 2400x1600, distorts). Verify variants preserve the source aspect ratio within tolerance:
+The large variant is full size, not 2400x1600. `resize_assets.py` calls `im.resize((2400, 1600))` but throws away the new image that call returns, so each large file is its source image saved again as a JPEG at the source's own width and height, and nothing is distorted. The owner decided on 2026-10-12 to keep it that way (tallyfy/work-queue#3856). Verify variants preserve the source aspect ratio within tolerance:
 
 ```python
 def check_aspect_ratios(source_path, variant_paths):
@@ -84,7 +84,7 @@ Repository structure the pipeline depends on:
 assets/          # Source images (original resolution)
 assets-small/    # 640x480 variants
 assets-medium/   # 1920x1280 variants
-assets-large/    # 2400x1600 variants (fix aspect ratio distortion)
+assets-large/    # full-size JPEG re-saves of the sources (not resized)
 ```
 
 ---

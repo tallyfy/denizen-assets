@@ -39,7 +39,7 @@ You can also directly access images from this repository:
 <!-- Medium images (1920x1280) -->
 <img src="https://denizen-assets.tallyfy.com/assets-medium/FR-PAR-1.jpg" alt="Paris">
 
-<!-- Large images (2400x1600) -->
+<!-- Large images (full size, not 2400x1600) -->
 <img src="https://denizen-assets.tallyfy.com/assets-large/JP-TOK-3.jpg" alt="Tokyo">
 ```
 
@@ -67,7 +67,7 @@ denizen-assets/
 ├── assets/          # Source images (original resolution)
 ├── assets-small/    # Small variants (640×480)
 ├── assets-medium/   # Medium variants (1920×1280) 
-├── assets-large/    # Large variants (2400×1600)
+├── assets-large/    # Large variants (full-size JPEG re-saves of the sources, not resized)
 ├── resize_assets.py # Image processing script
 └── README.md       # This file
 ```
@@ -122,7 +122,7 @@ The `resize_assets.py` script automatically creates three size variants:
 
 - **Small** (640×480): Thumbnails for compact displays
 - **Medium** (1920×1280): Standard web display
-- **Large** (2400×1600): High-resolution displays
+- **Large** (full size, not 2400×1600): the source image saved again as a JPEG at its own width and height, for high-resolution displays
 
 *All variants preserve the original aspect ratio.*
 
