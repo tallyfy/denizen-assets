@@ -461,7 +461,7 @@ func loadMapping() {
 **Image URL Generation**:
 ```go
 // Base URL points to this repository's assets
-BASE_ASSETS_URL := \"https://denizen-assets.tallyfy.com/assets-medium/\"
+BASE_ASSETS_URL := \"https://denizen-images.tallyfy.com/assets-medium/\"
 imageURL := BASE_ASSETS_URL + imageFilename
 ```
 
@@ -486,7 +486,7 @@ cd ../cloudflare-workers/denizen/
 wrangler deploy
 
 # Verify global availability
-curl -I https://denizen.tallyfy.com/assets-medium/US-NYC-1.jpg
+curl -I https://denizen-images.tallyfy.com/assets-medium/US-NYC-1.jpg
 ```
 
 ### Performance Considerations

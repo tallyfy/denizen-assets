@@ -17,7 +17,7 @@ The easiest way to get location-specific images is through our free API:
 ```bash
 # Get an image for New York City
 curl https://denizen.tallyfy.com/
-# Redirects to: https://denizen-assets.tallyfy.com/assets-medium/US-NYC-1.jpg
+# Redirects to: https://denizen-images.tallyfy.com/assets-medium/US-NYC-1.jpg
 
 # Get greeting text for a country
 curl https://denizen.tallyfy.com/text
@@ -34,13 +34,13 @@ You can also directly access images from this repository:
 
 ```html
 <!-- Small images (640x480) -->
-<img src="https://denizen-assets.tallyfy.com/assets-small/US-SF-2.jpg" alt="San Francisco">
+<img src="https://denizen-images.tallyfy.com/assets-small/US-SF-2.jpg" alt="San Francisco">
 
 <!-- Medium images (1920x1280) -->
-<img src="https://denizen-assets.tallyfy.com/assets-medium/FR-PAR-1.jpg" alt="Paris">
+<img src="https://denizen-images.tallyfy.com/assets-medium/FR-2.jpg" alt="Paris">
 
 <!-- Large images (full size, not 2400x1600) -->
-<img src="https://denizen-assets.tallyfy.com/assets-large/JP-TOK-3.jpg" alt="Tokyo">
+<img src="https://denizen-images.tallyfy.com/assets-large/JP-5.jpg" alt="Tokyo">
 ```
 
 ## 📍 Available Locations
@@ -134,7 +134,7 @@ The `resize_assets.py` script automatically creates three size variants:
 import React from 'react';
 
 const LocationImage = ({ countryCode, cityCode, imageNumber = 1, size = 'medium' }) => {
-  const baseUrl = 'https://denizen-assets.tallyfy.com';
+  const baseUrl = 'https://denizen-images.tallyfy.com';
   const imageUrl = `${baseUrl}/assets-${size}/${countryCode}-${cityCode}-${imageNumber}.jpg`;
   
   return (
@@ -154,7 +154,7 @@ const LocationImage = ({ countryCode, cityCode, imageNumber = 1, size = 'medium'
 
 ```css
 .hero-section {
-  background-image: url('https://denizen-assets.tallyfy.com/assets-large/US-NYC-1.jpg');
+  background-image: url('https://denizen-images.tallyfy.com/assets-large/US-NYC-1.jpg');
   background-size: cover;
   background-position: center;
   height: 100vh;
@@ -163,7 +163,7 @@ const LocationImage = ({ countryCode, cityCode, imageNumber = 1, size = 'medium'
 /* Responsive images */
 @media (max-width: 768px) {
   .hero-section {
-    background-image: url('https://denizen-assets.tallyfy.com/assets-small/US-NYC-1.jpg');
+    background-image: url('https://denizen-images.tallyfy.com/assets-small/US-NYC-1.jpg');
   }
 }
 ```
@@ -173,12 +173,12 @@ const LocationImage = ({ countryCode, cityCode, imageNumber = 1, size = 'medium'
 ```php
 <?php
 function getDenizenImageUrl($country, $city, $number = 1, $size = 'medium') {
-    $baseUrl = 'https://denizen-assets.tallyfy.com';
+    $baseUrl = 'https://denizen-images.tallyfy.com';
     return "{$baseUrl}/assets-{$size}/{$country}-{$city}-{$number}.jpg";
 }
 
 // Usage
-echo '<img src="' . getDenizenImageUrl('FR', 'PAR', 2, 'large') . '" alt="Paris">';
+echo '<img src="' . getDenizenImageUrl('US', 'NYC', 2, 'large') . '" alt="New York City">';
 ?>
 ```
 
@@ -191,7 +191,7 @@ from io import BytesIO
 
 def get_denizen_image(country_code, city_code, image_number=1, size='medium'):
     """Download and return a Denizen image as PIL Image object"""
-    base_url = 'https://denizen-assets.tallyfy.com'
+    base_url = 'https://denizen-images.tallyfy.com'
     image_url = f'{base_url}/assets-{size}/{country_code}-{city_code}-{image_number}.jpg'
     
     response = requests.get(image_url)
@@ -200,8 +200,8 @@ def get_denizen_image(country_code, city_code, image_number=1, size='medium'):
     return Image.open(BytesIO(response.content))
 
 # Usage
-image = get_denizen_image('JP', 'TOK', 3, 'large')
-image.show()  # Display the Tokyo image
+image = get_denizen_image('US', 'SF', 3, 'large')
+image.show()  # Display the San Francisco image
 ```
 
 ## 🌐 API Integration
