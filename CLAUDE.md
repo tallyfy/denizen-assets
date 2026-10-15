@@ -25,9 +25,9 @@ This repository works in conjunction with:
 - `../denizen/`: Go-based microservice API that serves these images
 - `../api-v2/`: Laravel-based main Tallyfy API
 - `../client/`: Angular-based Tallyfy client application
-- `../cloudflare-workers/`: Edge computing layer for global distribution
+- The Cloudflare Pages project `denizen-assets`, which publishes this repo at `denizen-images.tallyfy.com` (see Cloudflare Pages Distribution below). `../cloudflare-workers/` has no Denizen Worker.
 
-The repository contains **1,000+ curated images** across **40+ countries** with comprehensive geographical coverage including detailed US state/city mapping.
+The repository contains **398 curated images**, each in four sizes, across **38 countries**. Only the United States is covered city by city (44 cities); every other country is covered as a whole. Measured on 2026-10-15 at `c7d217b`.
 
 ## Commands
 
@@ -99,17 +99,20 @@ denizen-assets/
 
 ### Image Naming Convention
 
-**Strict Pattern**: `[COUNTRY_CODE]-[CITY_CODE]-[NUMBER].jpg`
+**Two shapes.** Only United States images carry a city code.
+
+- **Outside the United States**: `[COUNTRY_CODE]-[NUMBER].jpg`, such as `FR-3.jpg`. These images are chosen per country, so there is no city code.
+- **United States**: `US-[CITY_CODE]-[NUMBER].jpg`, such as `US-NYC-1.jpg`.
+
+Measured on 2026-10-15 at `c7d217b` with `git ls-tree`: `assets/` holds 398 images. 183 have the first shape across 37 country codes, 213 have the second across 44 city codes, one is `default.jpg`, and one is `US-HT-4.jpg.jpg`. No image outside the United States has a city code.
 
 #### Country Codes
-- **International**: ISO 3166-1 alpha-2 codes (AR, AU, BD, BR, CA, CN, CO, DE, EG, ES, ET, FR, GB, ID, IN, IR, IT, JP, KE, KR, MA, MM, MX, MY, NG, NP, PH, PK, PL, RU, SA, TH, TR, TW, UA, VN, ZA)
-- **United States**: State-specific codes (US-AL, US-AR, US-AT, US-AU, US-BA, US-BO, US-CH, US-CHA, US-CO, US-DA, US-DE, US-DET, US-FW, US-HT, US-IN, US-JA, US-KC, US-LA, US-LB, US-LV, US-ME, US-MI, US-MIA, US-MIN, US-NA, US-NYC, US-OAK, US-OKC, US-OM, US-PHI, US-PHO, US-PO, US-RA, US-SA, US-SAC, US-SD, US-SE, US-SF, US-SJ, US-STL, US-TU, US-TUC, US-WA, US-WI)
+- **Outside the United States**: ISO 3166-1 alpha-2 codes (AR, AU, BD, BR, CA, CN, CO, DE, EG, ES, ET, FR, GB, ID, IN, IR, IT, JP, KE, KR, MA, MM, MX, MY, NG, NP, PH, PK, PL, RU, SA, TH, TR, TW, UA, VN, ZA)
+- **United States**: `US`, always followed by a city code
 
-#### City Codes
-Custom abbreviations based on major cities:
-- **NYC** (New York City), **LA** (Los Angeles), **CHI** (Chicago), **SF** (San Francisco)
-- **LON** (London), **PAR** (Paris), **TOK** (Tokyo), **SYD** (Sydney)
-- **State codes for US cities**: AL (Alabama), NYC (New York), CA (California), etc.
+#### City Codes (United States only)
+Custom abbreviations, one per city, as `../denizen/microservice/mapping.json` uses them. They are city codes, not state codes: `US-AL` is Albuquerque, not Alabama.
+- AL (Albuquerque), AR (Arlington), AT (Atlanta), AU (Austin), BA (Baltimore), BO (Boston), CH (Chicago), CHA (Charlotte), CO (Columbus), DA (Dallas), DE (Denver), DET (Detroit), FW (Fort Worth), HT (Houston), IN (Indianapolis), JA (Jacksonville), KC (Kansas City), LA (Los Angeles), LB (Long Beach), LV (Las Vegas), ME (Memphis), MI (Milwaukee), MIA (Miami), MIN (Minneapolis), NA (Nashville), NYC (New York City), OAK (Oakland), OKC (Oklahoma City), OM (Omaha), PHI (Philadelphia), PHO (Phoenix), PO (Portland), RA (Raleigh), SA (San Antonio), SAC (Sacramento), SD (San Diego), SE (Seattle), SF (San Francisco), SJ (San Jose), STL (St Louis, whose images the mapping also uses for Kirkwood), TU (Tulsa), TUC (Tucson), WA (Washington), WI (Wichita)
 
 #### Numbering System
 - **Range**: 1-5 images per location
@@ -118,7 +121,7 @@ Custom abbreviations based on major cities:
 
 #### Special Files
 - **`default.jpg`**: Fallback image present in each size directory
-- **Naming Anomaly**: `US-HT-4.jpg.jpg` (double extension) - needs correction
+- **Naming Anomaly**: `US-HT-4.jpg.jpg` (double extension). Renaming it changes its public URL in all four folders and starts the Resize assets workflow, and `../denizen/microservice/mapping.json` has to name the file exactly as it is called here. So rename it only in step with a mapping change in denizen.
 
 ### Technical Implementation Details
 
@@ -172,7 +175,7 @@ The large variant stays full size by the owner's decision of 2026-10-12 (tallyfy
 
 #### Adding New Images
 1. **Placement**: Add source images to `assets/` directory only
-2. **Naming**: Follow strict `[COUNTRY_CODE]-[CITY_CODE]-[NUMBER].jpg` pattern
+2. **Naming**: Use `[COUNTRY_CODE]-[NUMBER].jpg`, or `US-[CITY_CODE]-[NUMBER].jpg` for a United States city (see Image Naming Convention)
 3. **Processing**: Push to `main` and let the Resize assets workflow make the variants, or run `python resize_assets.py --files-from <a file listing the new images>`
 4. **Verification**: Check that all three size directories contain the new images
 5. **Git**: Variants are automatically staged by the script
@@ -277,7 +280,7 @@ Use PIL for image processing and include error handling.
 # Update mapping.json in ../denizen based on new images
 # Sync with ../api-v2 image references
 # Update ../client asset references
-# Deploy to ../cloudflare-workers edge locations
+# Push to main, which the Cloudflare Pages project deploys (nothing to run by hand)
 ```
 
 ### Automation Best Practices
@@ -319,10 +322,10 @@ trap 'echo "Automation interrupted. Check task_queue/ for remaining tasks."' EXI
 # Test service endpoints after image updates
 ```
 
-#### Cloudflare Workers Deployment
+#### Cloudflare Pages Deployment
 ```bash
-# Automate asset deployment to edge locations
-# Update CDN references in worker configurations
+# A push to main deploys through the Cloudflare Pages project; no Worker is involved
+# Read that push's Pages deployment until it succeeds
 # Validate global availability after deployment
 # Monitor performance metrics across regions
 ```
@@ -358,7 +361,7 @@ trap 'echo "Automation interrupted. Check task_queue/ for remaining tasks."' EXI
 
 2. **File Preparation**
    ```bash
-   # Rename to follow convention: [COUNTRY_CODE]-[CITY_CODE]-[NUMBER].jpg
+   # Rename to [COUNTRY_CODE]-[NUMBER].jpg, or US-[CITY_CODE]-[NUMBER].jpg for a US city
    # Place in assets/ directory
    # Verify image quality and content appropriateness
    ```
@@ -470,9 +473,9 @@ imageURL := BASE_ASSETS_URL + imageFilename
 - URL paths must be consistent with directory structure
 - Image availability directly affects service uptime
 
-#### Cloudflare Workers Distribution
+#### Cloudflare Pages Distribution
 
-Images are globally distributed via Cloudflare Workers (`../cloudflare-workers/`):
+Images ship through the Cloudflare Pages project `denizen-assets`, not a Worker. The project is connected to this GitHub repo with `main` as its production branch, no build command and no path filter, so every push to `main` publishes the whole repo, docs included, to `denizen-images.tallyfy.com` and `denizen-assets.pages.dev`. There is nothing to deploy by hand. Read on 2026-10-15 from the Cloudflare Pages API: the latest production deployment was triggered by `github:push` for commit `c7d217b`. `../cloudflare-workers/` has no Denizen Worker and no `denizen` folder.
 
 **Edge Caching Strategy**:
 - Assets cached at edge locations worldwide
@@ -481,11 +484,8 @@ Images are globally distributed via Cloudflare Workers (`../cloudflare-workers/`
 
 **Deployment Coordination**:
 ```bash
-# After updating images, trigger CF Workers deployment
-cd ../cloudflare-workers/denizen/
-wrangler deploy
-
-# Verify global availability
+# After pushing to main, read the Pages deployment for that commit until it succeeds,
+# then verify global availability
 curl -I https://denizen-images.tallyfy.com/assets-medium/US-NYC-1.jpg
 ```
 
@@ -502,7 +502,7 @@ curl -I https://denizen-images.tallyfy.com/assets-medium/US-NYC-1.jpg
 #### Repository Size Management
 
 **Current State**:
-- Repository size: ~2.5GB (estimated from 1000+ images × 4 variants)
+- Repository size: ~2.5GB (measured 2026-10-15: 2.33 GiB packed, for 398 images in each of the four folders)
 - Git LFS not implemented
 - Large binary files in main repository
 
@@ -562,11 +562,14 @@ chmod +w assets-*/
 
 **Issue**: Missing images in Denizen service
 ```bash
-# Solution: Sync with mapping.json and verify URLs
-cd ../denizen/microservice/
-jq '.[] | select(.images[].url)' mapping.json | grep -o '[A-Z0-9-]*\.jpg' | sort > expected_images.txt
-ls ../../../denizen-assets/assets-medium/*.jpg | xargs -n1 basename | sort > actual_images.txt
-diff expected_images.txt actual_images.txt
+# Solution: list every name mapping.json uses that assets/ on origin/main lacks.
+# Run from this repo's root, with tallyfy/denizen cloned beside it, after fetching both.
+# The control name is made up each run and must always be printed, which proves the check can fail.
+ctl="ZZ-$RANDOM$RANDOM.jpg"
+comm -23 \
+  <( { jq -r '.[] | (.images[]?.url), (.cities[]?.images[]?.url)' ../denizen/microservice/mapping.json; echo "$ctl"; } | LC_ALL=C sort -u ) \
+  <( git ls-tree --name-only origin/main assets/ | sed 's|^assets/||' | LC_ALL=C sort -u )
+# A clean result prints only the control name. Any other line is a missing image.
 ```
 
 **Issue**: Large repository clone times
@@ -587,20 +590,17 @@ git read-tree -m -u HEAD
 ```bash
 # Coordinate changes across related repositories
 function update_denizen_ecosystem() {
-    # 1. Update assets in this repository
-    python resize_assets.py
-    
-    # 2. Update mapping in denizen service
-    cd ../denizen/
-    python sync_json_file.py
-    
-    # 3. Deploy cloudflare workers
-    cd ../cloudflare-workers/denizen/
-    wrangler deploy
-    
-    # 4. Run integration tests
-    cd ../api-v2/
-    php artisan test --filter=DenizenIntegrationTest
+    # 1. Add the new images to assets/ and push to main. The Resize assets workflow
+    #    makes their variants, and the Cloudflare Pages project deploys the push.
+    #    There is no Worker to deploy.
+
+    # 2. Check that the new images answer on the image host
+    curl -I https://denizen-images.tallyfy.com/assets-medium/US-NYC-1.jpg
+
+    # 3. Only then name them in ../denizen/microservice/mapping.json, through a pull
+    #    request in denizen (see its CLAUDE.md). A merge there deploys the service.
+    #    api-v2 has no Denizen integration test; its login and register pages call
+    #    denizen.tallyfy.com/data, so check one of those pages afterwards.
 }
 ```
 
@@ -616,7 +616,7 @@ class DenizenAssetsTestSuite(unittest.TestCase):
     
     def test_naming_conventions(self):
         \"\"\"Verify all images follow naming convention\"\"\"
-        pattern = re.compile(r'^[A-Z]{2}(-[A-Z0-9]+)?-[1-5]\.jpg$')
+        pattern = re.compile(r'^(US-[A-Z]+|[A-Z]{2})-[1-5]\.jpg$')
         for image_path in Path('assets').glob('*.jpg'):
             self.assertTrue(pattern.match(image_path.name))
     

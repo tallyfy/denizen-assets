@@ -22,24 +22,25 @@ for img_path in new_images:
 
 ### 2. Naming Convention Validation
 
-Enforce the strict `[COUNTRY_CODE]-[CITY_CODE]-[NUMBER].jpg` pattern programmatically:
+Enforce the two name shapes programmatically: `[COUNTRY_CODE]-[NUMBER].jpg` outside the United States, and `US-[CITY_CODE]-[NUMBER].jpg` for a United States city. Only United States images carry a city code.
 
 ```python
 import re
-pattern = r'^[A-Z]{2}(-[A-Z0-9]+)?-[1-5]\.jpg$'
+pattern = r'^(US-[A-Z]+|[A-Z]{2})-[1-5]\.jpg$'
 assert re.match(pattern, filename), f"Invalid filename: {filename}"
 ```
 
 Examples of correct vs. incorrect names:
 
 - ✅ `US-NYC-1.jpg` (US New York City, image 1)
-- ✅ `FR-PAR-3.jpg` (France Paris, image 3)
-- ✅ `GB-LON-5.jpg` (Great Britain London, image 5)
+- ✅ `FR-3.jpg` (France, image 3)
+- ✅ `GB-5.jpg` (Great Britain, image 5)
 - ❌ `newyork1.jpg` (incorrect format)
 - ❌ `US_NYC_1.jpg` (wrong separator)
 
 Special cases:
-- US states use the format `US-[STATE_CODE]-[NUMBER].jpg`
+- United States cities use the format `US-[CITY_CODE]-[NUMBER].jpg`. City codes are not state codes: `US-AL` is Albuquerque, and the full list is in `CLAUDE.md`
+- `US-HT-4.jpg.jpg` has a doubled extension; `CLAUDE.md` says why it is renamed only in step with the Denizen mapping
 - Numbers range from 1–5 per location
 - `default.jpg` exists as a fallback in each size directory
 
@@ -182,8 +183,8 @@ The automated test suite must cover:
 When making changes, coordinate with:
 
 1. `../denizen/` — update `mapping.json` if adding new locations.
-2. `../cloudflare-workers/denizen/` — deploy asset updates.
-3. `../api-v2/` — run integration tests.
+2. Nothing to deploy by hand: the Cloudflare Pages project `denizen-assets` publishes every push to `main`. `../cloudflare-workers/` has no Denizen Worker.
+3. `../api-v2/`: its login and register pages call `denizen.tallyfy.com/data`. It has no Denizen integration test, so check one of those pages.
 4. `../client/` — verify UI rendering with new assets.
 
 ### Deployment Checklist
@@ -192,6 +193,6 @@ When making changes, coordinate with:
 - [ ] All variants generated successfully
 - [ ] Git commits include proper descriptions
 - [ ] Denizen service mapping updated if needed
-- [ ] Cloudflare Workers deployment triggered
-- [ ] Integration tests passing
+- [ ] Cloudflare Pages deployment for the pushed commit read as successful
+- [ ] api-v2 login page shows a Denizen image
 - [ ] Global CDN availability verified

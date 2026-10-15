@@ -19,9 +19,9 @@ The easiest way to get location-specific images is through our free API:
 curl https://denizen.tallyfy.com/
 # Redirects to: https://denizen-images.tallyfy.com/assets-medium/US-NYC-1.jpg
 
-# Get greeting text for a country
+# Get the greeting for the caller's country
 curl https://denizen.tallyfy.com/text
-# Returns: "Hello" (localized greeting)
+# Returns JSON: {"country":"United States","city":"New York","ISO":"US","language":"English","greeting":"Hello"}
 
 # Get metadata about the location
 curl https://denizen.tallyfy.com/data
@@ -45,18 +45,18 @@ You can also directly access images from this repository:
 
 ## 📍 Available Locations
 
-We have curated images for **40+ countries** and **100+ cities** worldwide:
+We have curated images for **38 countries**, and for **44 cities** in the United States:
 
 ### 🌎 Countries
 - **Americas**: United States, Canada, Brazil, Mexico, Colombia, Argentina
 - **Europe**: United Kingdom, France, Germany, Spain, Italy, Poland, Russia, Ukraine
-- **Asia**: Japan, China, India, South Korea, Thailand, Vietnam, Philippines, Indonesia
-- **Middle East & Africa**: Egypt, Iran, Saudi Arabia, South Africa, Kenya, Nigeria, Ethiopia
+- **Asia**: Japan, China, India, South Korea, Thailand, Vietnam, Philippines, Indonesia, Bangladesh, Malaysia, Myanmar, Nepal, Pakistan, Taiwan
+- **Middle East & Africa**: Egypt, Iran, Saudi Arabia, Turkey, South Africa, Kenya, Nigeria, Ethiopia, Morocco
 - **Oceania**: Australia
 
 ### 🏙️ Major Cities
 - **USA**: New York, Los Angeles, Chicago, San Francisco, Miami, Boston, Seattle, Austin
-- **International**: London, Paris, Tokyo, Sydney, Mumbai, Berlin, Barcelona, Amsterdam
+- **Outside the USA**: images are chosen per country, not per city, so there is no London or Paris image, only images of the United Kingdom and France
 
 *[View complete list of available locations →](assets/)*
 
@@ -74,18 +74,18 @@ denizen-assets/
 
 ### 📝 Naming Convention
 
-All images follow a strict naming pattern:
+Image names take one of two shapes. Only United States images carry a city code.
 
-**Format**: `[COUNTRY_CODE]-[CITY_CODE]-[NUMBER].jpg`
+**Outside the United States**: `[COUNTRY_CODE]-[NUMBER].jpg`
+- `FR-3.jpg` → France, Image #3
+- `JP-2.jpg` → Japan, Image #2
+- `GB-5.jpg` → Great Britain, Image #5
 
-**Examples**:
+**United States**: `US-[CITY_CODE]-[NUMBER].jpg`
 - `US-NYC-1.jpg` → United States, New York City, Image #1
-- `FR-PAR-3.jpg` → France, Paris, Image #3  
-- `JP-TOK-2.jpg` → Japan, Tokyo, Image #2
-- `GB-LON-5.jpg` → Great Britain, London, Image #5
+- `US-LA-1.jpg` → United States, Los Angeles, Image #1
 
-**Special US Format**: `US-[STATE]-[CITY]-[NUMBER].jpg`
-- `US-CA-LA-1.jpg` → US, California, Los Angeles, Image #1
+`COUNTRY_CODE` is the ISO 3166-1 alpha-2 code, and `NUMBER` runs from 1 to 5. `default.jpg` is the fallback image. One file breaks the pattern: `US-HT-4.jpg.jpg` (Houston) has a doubled extension.
 
 ## 🛠️ Development
 
@@ -135,19 +135,22 @@ import React from 'react';
 
 const LocationImage = ({ countryCode, cityCode, imageNumber = 1, size = 'medium' }) => {
   const baseUrl = 'https://denizen-images.tallyfy.com';
-  const imageUrl = `${baseUrl}/assets-${size}/${countryCode}-${cityCode}-${imageNumber}.jpg`;
+  // Only United States images have a city code (US-SF-2.jpg). Leave cityCode out for any other country (FR-2.jpg).
+  const name = cityCode ? `${countryCode}-${cityCode}-${imageNumber}` : `${countryCode}-${imageNumber}`;
+  const imageUrl = `${baseUrl}/assets-${size}/${name}.jpg`;
   
   return (
     <img 
       src={imageUrl} 
-      alt={`${cityCode}, ${countryCode}`}
+      alt={cityCode ? `${cityCode}, ${countryCode}` : countryCode}
       style={{ width: '100%', height: 'auto' }}
     />
   );
 };
 
-// Usage
-<LocationImage countryCode="US" cityCode="SF" imageNumber={2} size="medium" />
+// Usage: a United States city, then a country
+<LocationImage countryCode="US" cityCode="SF" imageNumber={2} size="medium" />;
+<LocationImage countryCode="FR" imageNumber={2} size="medium" />;
 ```
 
 ### CSS Background Images
@@ -172,13 +175,16 @@ const LocationImage = ({ countryCode, cityCode, imageNumber = 1, size = 'medium'
 
 ```php
 <?php
-function getDenizenImageUrl($country, $city, $number = 1, $size = 'medium') {
+// Only United States images have a city code (US-NYC-2.jpg). Pass null as $city for any other country (JP-5.jpg).
+function getDenizenImageUrl($country, $city = null, $number = 1, $size = 'medium') {
     $baseUrl = 'https://denizen-images.tallyfy.com';
-    return "{$baseUrl}/assets-{$size}/{$country}-{$city}-{$number}.jpg";
+    $name = $city ? "{$country}-{$city}-{$number}" : "{$country}-{$number}";
+    return "{$baseUrl}/assets-{$size}/{$name}.jpg";
 }
 
 // Usage
 echo '<img src="' . getDenizenImageUrl('US', 'NYC', 2, 'large') . '" alt="New York City">';
+echo '<img src="' . getDenizenImageUrl('JP', null, 5, 'large') . '" alt="Japan">';
 ?>
 ```
 
@@ -189,10 +195,15 @@ import requests
 from PIL import Image
 from io import BytesIO
 
-def get_denizen_image(country_code, city_code, image_number=1, size='medium'):
-    """Download and return a Denizen image as PIL Image object"""
+def get_denizen_image(country_code, city_code=None, image_number=1, size='medium'):
+    """Download and return a Denizen image as PIL Image object.
+
+    Only United States images have a city code (US-SF-3.jpg).
+    Leave city_code as None for any other country (GB-5.jpg).
+    """
     base_url = 'https://denizen-images.tallyfy.com'
-    image_url = f'{base_url}/assets-{size}/{country_code}-{city_code}-{image_number}.jpg'
+    name = f'{country_code}-{city_code}-{image_number}' if city_code else f'{country_code}-{image_number}'
+    image_url = f'{base_url}/assets-{size}/{name}.jpg'
     
     response = requests.get(image_url)
     response.raise_for_status()
@@ -202,6 +213,7 @@ def get_denizen_image(country_code, city_code, image_number=1, size='medium'):
 # Usage
 image = get_denizen_image('US', 'SF', 3, 'large')
 image.show()  # Display the San Francisco image
+image = get_denizen_image('GB', image_number=5)  # An image of Great Britain
 ```
 
 ## 🌐 API Integration
@@ -213,8 +225,8 @@ For dynamic location detection and automatic image serving, use the [Denizen API
 fetch('https://denizen.tallyfy.com/data')
   .then(response => response.json())
   .then(data => {
-    console.log('User location:', data.location);
-    console.log('Recommended image:', data.image_url);
+    console.log('User location:', data.city, data.country);
+    console.log('Recommended image:', data.asset_medium);
   });
 ```
 
@@ -271,9 +283,9 @@ We welcome contributions! Here's how you can help:
 
 ## 📈 Usage Statistics
 
-- **1,000+** curated images
-- **40+** countries represented  
-- **100+** cities covered
+- **398** curated images, each in four sizes
+- **38** countries represented
+- **44** United States cities covered
 - **Global CDN** distribution via Cloudflare
 - **99.9%** uptime SLA
 
