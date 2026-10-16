@@ -287,7 +287,6 @@ We welcome contributions! Here's how you can help:
 - **38** countries represented
 - **44** United States cities covered
 - **Global CDN** distribution via Cloudflare
-- **99.9%** uptime SLA
 
 ## 🚨 Issues & Support
 
