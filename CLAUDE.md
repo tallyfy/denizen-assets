@@ -396,8 +396,13 @@ bash process_task_queue.sh
 tail -f /tmp/claude_automation.log
 
 # 3. Validate results
-python validate_batch_results.py
+python validate_batch_results.py   # does not exist, see the note below
 ```
+
+> **Corrected 2026-10-29 (#3).** `validate_batch_results.py` in step 3 is not in this repo and never
+> was (`git log --all` on it is empty). The `validate_assets.py` that task 4 of
+> `generate_image_tasks.sh` asks a session to write is not in the repo either. Check the results by
+> hand, as the Quality Validation steps above say.
 
 ### Code Modification Guidelines
 
